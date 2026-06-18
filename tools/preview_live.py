@@ -29,6 +29,8 @@ from scoring import Scoring  # noqa: E402
 from valuation import LeagueSettings, compute_values  # noqa: E402
 
 POSITIONS = ["QB", "RB", "WR", "TE", "K", "DST"]
+# Match the personal league baked into the app.
+LEAGUE = LeagueSettings(teams=16, budget=200)
 
 
 def _parse_weeks(text: str):
@@ -74,7 +76,7 @@ def main(argv=None):
     print("=" * 64)
 
     # --- top players per position ------------------------------------------
-    valued = compute_values(projections, Scoring(), LeagueSettings())
+    valued = compute_values(projections, Scoring(), LEAGUE)
     by_pos = {}
     for vp in valued:
         by_pos.setdefault(vp.position, []).append(vp)

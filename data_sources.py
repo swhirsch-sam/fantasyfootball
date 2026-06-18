@@ -498,6 +498,10 @@ def _build_sample() -> List[Projection]:
         _qb("Bo Nix", "DEN", 3700, 24, 11, 430, 4, 5),
         _qb("Baker Mayfield", "TB", 4000, 28, 13, 200, 3, 4),
         _qb("Trevor Lawrence", "JAX", 3900, 23, 12, 320, 3, 5),
+        _qb("Drake Maye", "NE", 3700, 21, 12, 380, 3, 5),
+        _qb("J.J. McCarthy", "MIN", 3500, 22, 12, 250, 3, 6),
+        _qb("Michael Penix Jr.", "ATL", 3600, 21, 13, 150, 2, 5),
+        _qb("Anthony Richardson", "IND", 3300, 19, 13, 620, 6, 7),
     ]
 
     # --- Running backs ----------------------------------------------------
@@ -532,6 +536,20 @@ def _build_sample() -> List[Projection]:
         _rb("Isiah Pacheco", "KC", 850, 7, 30, 230, 1, 2),
         _rb("Jordan Mason", "MIN", 780, 6, 20, 150, 1, 2),
         _rb("Tyrone Tracy Jr.", "NYG", 760, 5, 36, 280, 1, 3),
+        _rb("Jaylen Warren", "PIT", 720, 4, 38, 300, 1, 2),
+        _rb("Travis Etienne Jr.", "JAX", 780, 5, 30, 220, 1, 3),
+        _rb("Rachaad White", "TB", 640, 4, 44, 350, 1, 2),
+        _rb("Zach Charbonnet", "SEA", 700, 6, 26, 200, 1, 2),
+        _rb("Tyjae Spears", "TEN", 680, 4, 34, 280, 1, 2),
+        _rb("Javonte Williams", "DAL", 700, 5, 28, 200, 1, 3),
+        _rb("Austin Ekeler", "WAS", 520, 3, 40, 320, 2, 2),
+        _rb("Trey Benson", "ARI", 650, 5, 18, 140, 1, 2),
+        _rb("Jerome Ford", "CLE", 600, 4, 30, 240, 1, 2),
+        _rb("Jaylen Wright", "MIA", 620, 4, 16, 130, 0, 2),
+        _rb("Tank Bigsby", "JAX", 620, 5, 12, 90, 0, 2),
+        _rb("Roschon Johnson", "CHI", 540, 5, 20, 150, 1, 2),
+        _rb("Zamir White", "LV", 560, 3, 16, 120, 0, 3),
+        _rb("Devin Singletary", "NYG", 580, 3, 22, 160, 0, 2),
     ]
 
     # --- Wide receivers ---------------------------------------------------
@@ -566,6 +584,21 @@ def _build_sample() -> List[Projection]:
         _wr("Jordan Addison", "MIN", 72, 920, 7, 0, 0, 1),
         _wr("Jameson Williams", "DET", 64, 940, 6, 80, 1, 1),
         _wr("Chris Olave", "NO", 78, 900, 5, 0, 0, 1),
+        _wr("Jerry Jeudy", "CLE", 74, 920, 4, 0, 0, 1),
+        _wr("Xavier Worthy", "KC", 72, 860, 6, 120, 1, 1),
+        _wr("Rome Odunze", "CHI", 68, 900, 6, 0, 0, 1),
+        _wr("Cooper Kupp", "SEA", 76, 880, 5, 0, 0, 1),
+        _wr("Calvin Ridley", "TEN", 70, 880, 5, 0, 0, 1),
+        _wr("Jakobi Meyers", "LV", 78, 860, 4, 0, 0, 1),
+        _wr("Jayden Reed", "GB", 64, 820, 6, 80, 1, 1),
+        _wr("Keon Coleman", "BUF", 60, 820, 6, 0, 0, 1),
+        _wr("Khalil Shakir", "BUF", 72, 800, 4, 0, 0, 1),
+        _wr("Diontae Johnson", "CAR", 70, 800, 5, 0, 0, 1),
+        _wr("Christian Kirk", "JAX", 66, 780, 4, 0, 0, 1),
+        _wr("Tank Dell", "HOU", 62, 760, 5, 0, 0, 1),
+        _wr("Josh Downs", "IND", 68, 760, 4, 0, 0, 1),
+        _wr("Rashod Bateman", "BAL", 56, 740, 6, 0, 0, 1),
+        _wr("Wan'Dale Robinson", "NYG", 74, 700, 3, 0, 0, 1),
     ]
 
     # --- Tight ends -------------------------------------------------------
@@ -584,6 +617,12 @@ def _build_sample() -> List[Projection]:
         _te("Tucker Kraft", "GB", 54, 620, 6, 1),
         _te("Colston Loveland", "CHI", 56, 600, 4, 1),
         _te("Dallas Goedert", "PHI", 52, 580, 4, 1),
+        _te("Jake Ferguson", "DAL", 60, 600, 4, 1),
+        _te("Kyle Pitts", "ATL", 56, 640, 4, 1),
+        _te("Hunter Henry", "NE", 56, 580, 3, 1),
+        _te("Pat Freiermuth", "PIT", 52, 560, 4, 1),
+        _te("Cade Otton", "TB", 54, 560, 3, 1),
+        _te("Cole Kmet", "CHI", 50, 540, 4, 1),
     ]
 
     # --- Kickers ----------------------------------------------------------
@@ -600,6 +639,12 @@ def _build_sample() -> List[Projection]:
         _k("Wil Lutz", "DEN", 1, 6, 9, 7, 4, 42, 2, 1),
         _k("Matt Gay", "WAS", 1, 5, 9, 7, 4, 39, 3, 1),
         _k("Evan McPherson", "CIN", 0, 6, 8, 7, 5, 41, 3, 1),
+        _k("Jake Elliott", "PHI", 1, 5, 9, 7, 4, 40, 3, 1),
+        _k("Cairo Santos", "CHI", 0, 6, 9, 6, 3, 38, 3, 1),
+        _k("Chase McLaughlin", "TB", 1, 6, 8, 6, 4, 39, 2, 0),
+        _k("Will Reichard", "MIN", 1, 5, 8, 7, 3, 37, 2, 1),
+        _k("Graham Gano", "NYG", 0, 5, 8, 6, 3, 35, 3, 1),
+        _k("Nick Folk", "NYJ", 0, 5, 9, 6, 2, 36, 3, 1),
     ]
 
     # --- Team defenses ----------------------------------------------------
@@ -617,6 +662,12 @@ def _build_sample() -> List[Projection]:
         _dst("Packers", "GB", 364, 39, 14, 7, 2, 1, 2),
         _dst("Chiefs", "KC", 356, 38, 13, 8, 2, 0, 2),
         _dst("Seahawks", "SEA", 372, 40, 12, 6, 2, 1, 2),
+        _dst("49ers", "SF", 366, 42, 13, 8, 3, 1, 3),
+        _dst("Jets", "NYJ", 372, 41, 14, 7, 2, 0, 3),
+        _dst("Browns", "CLE", 376, 43, 12, 7, 2, 1, 2),
+        _dst("Cowboys", "DAL", 380, 44, 14, 7, 3, 0, 2),
+        _dst("Buccaneers", "TB", 384, 40, 12, 8, 2, 1, 2),
+        _dst("Colts", "IND", 392, 38, 13, 8, 2, 0, 2),
     ]
 
     return players

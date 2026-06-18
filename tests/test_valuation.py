@@ -2,7 +2,7 @@
 
 import data_sources as ds
 from scoring import Scoring
-from valuation import LeagueSettings, compute_values
+from valuation import LeagueSettings, compute_values, positional_summary
 
 
 def test_values_returned_for_every_player():
@@ -51,3 +51,46 @@ def test_more_teams_raises_replacement_and_concentrates_value():
     # With more teams the same pool is split among more rostered players, so the
     # very top player commands a larger share in the shallower league.
     assert cheap[0].value > 1.0 and deep[0].value > 1.0
+
+
+# --- richer metrics (the 16-team personal config) ---------------------------
+LOCKED = LeagueSettings(teams=16, budget=200)
+
+
+def test_pos_rank_and_label():
+    valued = compute_values(ds.sample_projections(), settings=LOCKED)
+    rbs = sorted([v for v in valued if v.position == "RB"],
+                 key=lambda v: v.points, reverse=True)
+    assert rbs[0].pos_rank == 1 and rbs[0].pos_label == "RB1"
+    assert rbs[2].pos_label == "RB3"
+
+
+def test_ppg_is_points_over_games():
+    vp = compute_values(ds.sample_projections(), settings=LOCKED)[0]
+    assert vp.ppg == round(vp.points / vp.games, 2)
+
+
+def test_vols_never_exceeds_vorp():
+    # the last starter outscores replacement, so VOLS <= VORP for everyone
+    for vp in compute_values(ds.sample_projections(), settings=LOCKED):
+        assert vp.vols <= vp.vorp + 1e-6
+
+
+def test_starter_flags_track_league_size():
+    valued = compute_values(ds.sample_projections(), settings=LOCKED)
+    starters = sum(1 for vp in valued if vp.is_starter)
+    # more than base starters (flex is used), no more than base + flex
+    assert LOCKED.teams * 8 < starters <= LOCKED.teams * 9
+
+
+def test_budget_allocation_sums_to_team_budget():
+    valued = compute_values(ds.sample_projections(), settings=LOCKED)
+    summary = positional_summary(valued, LOCKED)
+    per_team_total = sum(s.per_team_spend for s in summary)
+    assert abs(per_team_total - LOCKED.budget) < 5
+    assert [s.position for s in summary][:3] == ["QB", "RB", "WR"]
+
+
+def test_vorp_per_dollar_positive_for_priced_players():
+    valued = compute_values(ds.sample_projections(), settings=LOCKED)
+    assert all(vp.vorp_per_dollar > 0 for vp in valued if vp.value > 1)

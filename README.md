@@ -1,12 +1,16 @@
-# 🏈 Dynasty Auction Tool
+# 🏈 My Auction War Room
 
-A fantasy-football **auction draft** tool with fully custom scoring. It pulls
-projections from ESPN and/or Sleeper, scores every player under *your* league
-rules, and turns those points into **dollar values** using value-based drafting
-(VBD) — then helps you run draft day with a live budget + inflation tracker.
+A **personal** fantasy-football auction draft tool, hard-wired to one league:
+**16 teams · $200 budget · full PPR**. It pulls projections from ESPN and/or
+Sleeper, scores every player under custom rules, and turns those points into
+**dollar values** plus a stack of draft-day decision metrics.
 
-It ships with realistic offline SAMPLE data, so everything works the moment you
-clone it; live sources are opt-in.
+This is deliberately *not* a configurable app for anyone — there are no
+league-setting knobs. The league is locked in code (`app.py` / `scoring.py`)
+and the UI spends its space on **analysis** instead.
+
+It ships with realistic offline SAMPLE data, so everything works immediately;
+live sources are opt-in.
 
 ---
 
@@ -20,47 +24,60 @@ python tools/preview_live.py    # terminal preview / live-data sanity check
 pytest -q                       # tests (incl. the live-mapping checks)
 ```
 
-The app opens with three tabs:
+The app has four tabs:
 
 | Tab | What it does |
 | --- | --- |
-| 💰 **Auction Board** | Sortable $ values, tiers, search/position filters, and a draft tracker that updates **budget**, **max bid**, and **inflation** live as you tick off picks. |
+| 💰 **Auction Board** | Every player priced in $, with **pos rank, Pts/G, VORP, VOLS, value-per-dollar, tier** and inflation-adjusted $. A live tracker shows your **budget, max bid, roster slots filled, and positional needs** as you tick off picks. |
+| 📈 **Analysis** | **Budget allocation** (how the market should split your $200 across positions), **positional scarcity** (starter cliffs), a **bargain finder** (best VORP/$), and tier-1 must-pay targets. |
 | 📊 **Tiers** | A per-position tier-break visual so you can see the cliffs. |
-| 🔎 **Data Diagnostics** | Which source was used, coverage by position, and any **unmapped stat keys** — the early-warning signal that a source changed its schema. |
+| 🔎 **Diagnostics** | Which source was used, coverage by position, and any **unmapped stat keys** — the early-warning signal that a source changed its schema. |
 
 ---
 
-## Run it as a website (no install)
+## Run it as a website (for yourself)
 
-The app is also published as a **static site on GitHub Pages** — it runs
-entirely in your browser via [stlite](https://github.com/whitphx/stlite)
-(Streamlit compiled to WebAssembly), so there's no server and nothing to
-install:
+You can reach the tool from a browser without a local setup two ways:
 
-**→ https://swhirsch-sam.github.io/fantasyfootball/**
-
-First load compiles Python in the browser (~20–60s), then it's cached. The
-hosted build uses the bundled SAMPLE data (live ESPN/Sleeper calls can't run
-from a browser due to CORS); for live data, run locally or on
-[Streamlit Community Cloud](https://share.streamlit.io).
-
-The page is generated from the Python sources with `python tools/build_static.py`
-(output: `docs/index.html`). To enable Pages: **Settings → Pages → Deploy from a
-branch → `main` → `/docs`**.
+- **Streamlit Community Cloud** — runs the real app server-side (live data
+  works). It can be made **private** (invite-only by email) in the app
+  settings, which suits a personal tool. Deploy from `main` / `app.py` at
+  [share.streamlit.io](https://share.streamlit.io).
+- **GitHub Pages (static)** — `docs/index.html` runs the app entirely in the
+  browser via [stlite](https://github.com/whitphx/stlite) (Streamlit on
+  WebAssembly), no server. Note Pages is **public** to anyone with the link,
+  and it uses SAMPLE data only (browsers can't make the live ESPN/Sleeper calls
+  — CORS). Enable via **Settings → Pages → Deploy from a branch → `main` →
+  `/docs`**. The page regenerates with `python tools/build_static.py`.
 
 ---
 
 ## How values are computed
 
-1. **Score** every player with your scoring rules (`scoring.py`).
+1. **Score** every player with the scoring rules (`scoring.py`).
 2. **Replacement level** per position = the best player who *isn't* a starter,
-   with the FLEX filled by the best leftover RB/WR/TE across the league.
-3. **VORP** = points above that replacement level.
-4. **Dollars**: the auction pool (`teams × budget`) minus a $1 minimum bid per
-   roster slot is distributed proportionally to VORP. Total assigned dollars
-   therefore sum back to the pool.
+   with the FLEX filled by the best leftover RB/WR/TE across the 16 teams.
+3. **VORP** = points above replacement. **VOLS** = points above the *last
+   starter* (a second, stricter baseline).
+4. **Dollars**: the pool (`teams × budget` = $3,200) minus a $1 minimum bid per
+   roster slot is distributed proportionally to VORP, so assigned dollars sum
+   back to the pool.
 
-Tiers are detected from natural drop-offs in value within each position.
+### Metrics you get per player
+| Metric | Meaning |
+| --- | --- |
+| **Pos rank** | Rank within position (e.g. `RB3`). |
+| **Pts/G** | Projected points per game. |
+| **VORP / VOLS** | Value over replacement / over the last starter. |
+| **Value $ / Adj $** | Auction value, and value re-scaled for live draft **inflation**. |
+| **V/$** | VORP bought per dollar — the **bargain** signal. |
+| **Tier** | Auto-detected from value drop-offs within the position. |
+
+### League-level analysis
+- **Budget allocation** — recommended $ per position per team (sums to $200).
+- **Positional scarcity** — startable counts and the *starter cliff* (points
+  between the last starter and replacement) so you know where to pay up.
+- **Bargain finder** and **tier-1 targets**.
 
 ---
 
