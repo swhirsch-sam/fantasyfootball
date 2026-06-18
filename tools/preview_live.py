@@ -62,6 +62,9 @@ def main(argv=None):
     print(f"  players loaded   : {len(projections)}")
     print(f"  by position      : "
           + ", ".join(f"{p}={diag.counts.get(p, 0)}" for p in POSITIONS))
+    if diag.source_counts:
+        print("  players per API  : "
+              + ", ".join(f"{k}={v}" for k, v in sorted(diag.source_counts.items())))
     for note in diag.notes:
         print(f"  note  : {note}")
     for err in diag.errors:

@@ -37,7 +37,7 @@ FLEX_ELIGIBLE = ("RB", "WR", "TE")
 
 # Bump on each deploy; shown in the sidebar so you can confirm a live deploy is
 # running the latest code (and not a stale cache).
-APP_BUILD = "2026-06-18.2"
+APP_BUILD = "2026-06-18.3"
 
 st.set_page_config(page_title="My Auction War Room", page_icon="🏈", layout="wide")
 
@@ -296,6 +296,12 @@ def diagnostics_tab(diag, projections):
         st.info(note)
     for err in diag.errors:
         st.error(err)
+
+    if diag.source_counts:
+        st.write("**Players pulled per API** — confirms which source is live")
+        st.dataframe(pd.DataFrame(sorted(diag.source_counts.items()),
+                                  columns=["Source", "Players"]),
+                     hide_index=True, width="stretch")
 
     st.write("**Coverage by position**")
     st.dataframe(pd.DataFrame(sorted(diag.counts.items()),

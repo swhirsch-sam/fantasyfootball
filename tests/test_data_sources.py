@@ -158,6 +158,29 @@ def test_blend_takes_offense_from_espn_and_special_from_sleeper():
     assert "Ignore Me" not in sources
 
 
+def test_blend_uses_sleeper_offense_when_espn_is_empty():
+    # ESPN failed/empty -> the blend must still use Sleeper, not drop to nothing.
+    sleeper = [
+        ds.Projection("sleeper:qb", "Sleeper QB", "QB", "KC", {"pass_yd": 4000}),
+        ds.Projection("sleeper:k", "Some K", "K", "DAL", {"fgm_40_49": 5}),
+    ]
+    blended = ds.blend_projections([], sleeper)
+    sources = {p.name: p.source for p in blended}
+    assert sources["Sleeper QB"] == "blend:sleeper"
+    assert sources["Some K"] == "blend:sleeper"
+
+
+def test_blend_uses_espn_special_when_sleeper_is_empty():
+    espn = [
+        ds.Projection("espn:qb", "ESPN QB", "QB", "KC", {"pass_yd": 4000}),
+        ds.Projection("espn:dst", "ESPN D", "DST", "SF", {"sack": 40}),
+    ]
+    blended = ds.blend_projections(espn, [])
+    sources = {p.name: p.source for p in blended}
+    assert sources["ESPN QB"] == "blend:espn"
+    assert sources["ESPN D"] == "blend:espn"  # K/DST falls back to ESPN
+
+
 # --- SAMPLE + orchestration -------------------------------------------------
 def test_sample_data_has_every_position():
     proj = ds.sample_projections()

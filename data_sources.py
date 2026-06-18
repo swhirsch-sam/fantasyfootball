@@ -71,6 +71,7 @@ class Diagnostics:
     source_requested: str = ""
     source_used: str = ""
     counts: Dict[str, int] = field(default_factory=dict)
+    source_counts: Dict[str, int] = field(default_factory=dict)  # players per API
     unmapped: Dict[str, Set[str]] = field(default_factory=dict)
     errors: List[str] = field(default_factory=list)
     notes: List[str] = field(default_factory=list)
@@ -413,19 +414,40 @@ def fetch_sleeper_season(
 def blend_projections(
     espn: List[Projection], sleeper: List[Projection]
 ) -> List[Projection]:
-    """Offense from ESPN, kickers & defenses from Sleeper.
+    """Best-of-each blend, resilient to one source being unavailable.
 
-    ESPN gives the cleanest offensive projections; Sleeper gives the cleanest
-    K/DST (its buckets line up with this league's tiers). The blend takes the
-    best of each rather than averaging.
+    Offense prefers ESPN (cleanest projections) but falls back to Sleeper if
+    ESPN returned nothing. Kickers & defenses prefer Sleeper (its buckets line
+    up with this league's tiers) but fall back to ESPN. Nothing is averaged —
+    and critically, a working source is never discarded because the other one
+    failed.
     """
-    offense = [p for p in espn if p.position in OFFENSE_POSITIONS]
-    special = [p for p in sleeper if p.position in SPECIAL_POSITIONS]
+    espn_off = [p for p in espn if p.position in OFFENSE_POSITIONS]
+    sleeper_off = [p for p in sleeper if p.position in OFFENSE_POSITIONS]
+    espn_sp = [p for p in espn if p.position in SPECIAL_POSITIONS]
+    sleeper_sp = [p for p in sleeper if p.position in SPECIAL_POSITIONS]
+
+    offense, off_src = (espn_off, "blend:espn") if espn_off else (sleeper_off, "blend:sleeper")
+    special, sp_src = (sleeper_sp, "blend:sleeper") if sleeper_sp else (espn_sp, "blend:espn")
     for p in offense:
-        p.source = "blend:espn"
+        p.source = off_src
     for p in special:
-        p.source = "blend:sleeper"
+        p.source = sp_src
     return offense + special
+
+
+def describe_blend(espn: List[Projection], sleeper: List[Projection]) -> str:
+    """Human-readable note of which source actually supplied each slot."""
+    def src(have_espn, have_sleeper, prefer_sleeper=False):
+        if prefer_sleeper:
+            return "sleeper" if have_sleeper else ("espn" if have_espn else "none")
+        return "espn" if have_espn else ("sleeper" if have_sleeper else "none")
+
+    e_off = any(p.position in OFFENSE_POSITIONS for p in espn)
+    s_off = any(p.position in OFFENSE_POSITIONS for p in sleeper)
+    e_sp = any(p.position in SPECIAL_POSITIONS for p in espn)
+    s_sp = any(p.position in SPECIAL_POSITIONS for p in sleeper)
+    return f"blend (offense={src(e_off, s_off)}, K/DST={src(e_sp, s_sp, prefer_sleeper=True)})"
 
 
 # ---------------------------------------------------------------------------
@@ -709,41 +731,56 @@ def get_projections(
     """
     diag = Diagnostics(source_requested=source)
     source = (source or "sample").lower()
+    weeks = list(weeks)
     projections: List[Projection] = []
 
-    try:
-        if source == "sample":
-            projections = sample_projections()
-            diag.source_used = "sample"
+    def _load_sleeper() -> List[Projection]:
+        proj, unmapped = aggregate_sleeper_weeks(fetch_sleeper_season(season, weeks))
+        diag.add_unmapped("sleeper", unmapped)
+        return proj
 
-        elif source == "sleeper":
-            weeks = list(weeks)
-            raw_weeks = fetch_sleeper_season(season, weeks)
-            projections, unmapped = aggregate_sleeper_weeks(raw_weeks)
-            diag.add_unmapped("sleeper", unmapped)
+    def _load_espn() -> List[Projection]:
+        proj, unmapped = parse_espn_players(fetch_espn(season), season=season)
+        diag.add_unmapped("espn", unmapped)
+        return proj
+
+    def _try(name: str, fn) -> List[Projection]:
+        """Run one source, capturing its outcome independently of the others."""
+        try:
+            proj = fn()
+        except Exception as exc:  # pragma: no cover - network/parse failures
+            diag.errors.append(f"{name}: {type(exc).__name__}: {exc}")
+            diag.source_counts[name] = 0
+            return []
+        diag.source_counts[name] = len(proj)
+        if not proj:
+            diag.notes.append(f"{name} returned 0 players.")
+        return proj
+
+    if source == "sample":
+        projections = sample_projections()
+        diag.source_used = "sample"
+
+    elif source == "sleeper":
+        projections = _try("sleeper", _load_sleeper)
+        if projections:
             diag.source_used = "sleeper"
 
-        elif source == "espn":
-            payload = fetch_espn(season)
-            projections, unmapped = parse_espn_players(payload, season=season)
-            diag.add_unmapped("espn", unmapped)
+    elif source == "espn":
+        projections = _try("espn", _load_espn)
+        if projections:
             diag.source_used = "espn"
 
-        elif source == "blend":
-            espn_payload = fetch_espn(season)
-            espn_proj, espn_unmapped = parse_espn_players(espn_payload, season=season)
-            diag.add_unmapped("espn", espn_unmapped)
-            raw_weeks = fetch_sleeper_season(season, list(weeks))
-            sleeper_proj, sleeper_unmapped = aggregate_sleeper_weeks(raw_weeks)
-            diag.add_unmapped("sleeper", sleeper_unmapped)
-            projections = blend_projections(espn_proj, sleeper_proj)
-            diag.source_used = "blend"
+    elif source == "blend":
+        # Fetch both independently so one failing never discards the other.
+        espn_proj = _try("espn", _load_espn)
+        sleeper_proj = _try("sleeper", _load_sleeper)
+        projections = blend_projections(espn_proj, sleeper_proj)
+        if projections:
+            diag.source_used = describe_blend(espn_proj, sleeper_proj)
 
-        else:
-            diag.errors.append(f"unknown source '{source}'")
-
-    except Exception as exc:  # pragma: no cover - network/parse failures
-        diag.errors.append(f"{type(exc).__name__}: {exc}")
+    else:
+        diag.errors.append(f"unknown source '{source}'")
 
     if not projections and allow_fallback and source != "sample":
         diag.notes.append(
