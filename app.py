@@ -35,6 +35,10 @@ LEAGUE = LeagueSettings(
 )
 FLEX_ELIGIBLE = ("RB", "WR", "TE")
 
+# Bump on each deploy; shown in the sidebar so you can confirm a live deploy is
+# running the latest code (and not a stale cache).
+APP_BUILD = "2026-06-18.2"
+
 st.set_page_config(page_title="My Auction War Room", page_icon="🏈", layout="wide")
 
 SOURCE_LABELS = {
@@ -334,6 +338,7 @@ def main():
             f"- Bench: {LEAGUE.bench} · Scoring: full PPR\n"
             "- Edit rules in `scoring.py` / `app.py`"
         )
+        st.caption(f"build {APP_BUILD}")
 
     projections, diag = load_projections(source, int(season))
     valued = compute_values(projections, Scoring(), LEAGUE)
