@@ -1,0 +1,43 @@
+name: Refresh projections snapshot
+
+# Pulls ESPN + Sleeper projections and commits them to data/ so the app's
+# "snapshot" source has fresh data — no live API needed at draft time.
+on:
+  workflow_dispatch:        # manual "Run workflow" button in the Actions tab
+    inputs:
+      season:
+        description: "NFL season to fetch"
+        default: "2026"
+        required: true
+  schedule:
+    - cron: "0 9 1 * *"     # 09:00 UTC on the 1st of each month
+
+permissions:
+  contents: write           # allow the workflow to commit the snapshot
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install --quiet requests
+
+      - name: Fetch snapshot
+        run: python tools/fetch_snapshot.py --season "${{ github.event.inputs.season || '2026' }}"
+
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/
+          if git diff --staged --quiet; then
+            echo "No projection changes to commit."
+          else
+            git commit -m "Refresh projections snapshot ($(date -u +%Y-%m-%d))"
+            git push
+          fi

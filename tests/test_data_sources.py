@@ -193,3 +193,30 @@ def test_get_projections_sample_is_offline_and_diagnosed():
     assert diag.source_used == "sample"
     assert diag.counts["QB"] >= 12
     assert not diag.errors
+
+
+def test_snapshot_source_reads_committed_files(tmp_path):
+    import json
+    espn = {"players": [{"id": 1, "player": {
+        "id": 1, "fullName": "Snap QB", "defaultPositionId": 1, "proTeamId": 12,
+        "stats": [{"seasonId": 2026, "statSourceId": 1, "statSplitTypeId": 0,
+                   "stats": {"3": 4000, "4": 30}}]}}]}
+    sleeper = {"season": 2026, "weeks": [[
+        {"player_id": "SF", "player": {"position": "DEF", "team": "SF"},
+         "stats": {"pts_allow": 18, "sack": 3}}]]}
+    (tmp_path / "espn_2026.json").write_text(json.dumps(espn))
+    (tmp_path / "sleeper_2026.json").write_text(json.dumps(sleeper))
+
+    proj, diag = ds.get_projections("snapshot", season=2026, data_dir=str(tmp_path))
+    names = {p.name for p in proj}
+    assert "Snap QB" in names                       # ESPN offense from snapshot
+    assert any(p.position == "DST" for p in proj)   # Sleeper DST from snapshot
+    assert diag.source_counts.get("espn", 0) >= 1
+    assert diag.source_counts.get("sleeper", 0) >= 1
+    assert "snapshot" in diag.source_used
+
+
+def test_snapshot_source_falls_back_when_files_missing(tmp_path):
+    proj, diag = ds.get_projections("snapshot", season=1999, data_dir=str(tmp_path))
+    assert diag.source_used == "sample (fallback)"
+    assert any("no ESPN snapshot" in n for n in diag.notes)

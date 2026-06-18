@@ -28,6 +28,8 @@ Stat-mapping provenance
 
 from __future__ import annotations
 
+import json
+import os
 from dataclasses import dataclass, field
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
@@ -707,6 +709,40 @@ def sample_projections() -> List[Projection]:
 
 
 # ---------------------------------------------------------------------------
+# Snapshots — committed raw payloads (the robust path for a personal tool)
+# ---------------------------------------------------------------------------
+# Instead of hitting ESPN/Sleeper live (cloud IPs get 403'd, browsers hit
+# CORS), fetch once and commit the raw JSON to ``data/``. The app then parses
+# those files with the *same* verified parsers, fully offline. Refresh them
+# with ``tools/fetch_snapshot.py`` or the "Refresh projections snapshot" GitHub
+# Action.
+SNAPSHOT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+
+
+def snapshot_paths(season: int, data_dir: Optional[str] = None) -> Tuple[str, str]:
+    d = data_dir or SNAPSHOT_DIR
+    return (os.path.join(d, f"espn_{season}.json"),
+            os.path.join(d, f"sleeper_{season}.json"))
+
+
+def load_espn_snapshot(
+    path: str, season: Optional[int] = None
+) -> Tuple[List[Projection], Set[str]]:
+    """Parse a saved raw ESPN payload (as written by fetch_snapshot)."""
+    with open(path, "r", encoding="utf-8") as fh:
+        payload = json.load(fh)
+    return parse_espn_players(payload, season=season, source="snapshot")
+
+
+def load_sleeper_snapshot(path: str) -> Tuple[List[Projection], Set[str]]:
+    """Parse a saved Sleeper snapshot ({"weeks": [<week payloads>]})."""
+    with open(path, "r", encoding="utf-8") as fh:
+        data = json.load(fh)
+    weeks = data["weeks"] if isinstance(data, dict) and "weeks" in data else data
+    return aggregate_sleeper_weeks(weeks, source="snapshot")
+
+
+# ---------------------------------------------------------------------------
 # Orchestration
 # ---------------------------------------------------------------------------
 def _counts(projections: List[Projection]) -> Dict[str, int]:
@@ -722,12 +758,15 @@ def get_projections(
     season: int = 2026,
     weeks: Iterable[int] = range(1, 18),
     allow_fallback: bool = True,
+    data_dir: Optional[str] = None,
 ) -> Tuple[List[Projection], Diagnostics]:
     """Load projections from ``source`` with graceful fallback to SAMPLE.
 
-    ``source`` is one of ``sample`` / ``sleeper`` / ``espn`` / ``blend``.
-    Network failures or empty live responses fall back to SAMPLE (when
-    ``allow_fallback``) and are recorded in the returned ``Diagnostics``.
+    ``source`` is one of ``snapshot`` / ``sleeper`` / ``espn`` / ``blend`` /
+    ``sample``. ``snapshot`` reads committed ``data/`` files (the robust,
+    offline path); the live sources hit the APIs. Failures or empty responses
+    fall back to SAMPLE (when ``allow_fallback``) and are recorded in the
+    returned ``Diagnostics``.
     """
     diag = Diagnostics(source_requested=source)
     source = (source or "sample").lower()
@@ -760,6 +799,36 @@ def get_projections(
     if source == "sample":
         projections = sample_projections()
         diag.source_used = "sample"
+
+    elif source == "snapshot":
+        espn_path, sleeper_path = snapshot_paths(season, data_dir)
+        espn_proj = []
+        sleeper_proj = []
+
+        def _snap_espn() -> List[Projection]:
+            proj, unmapped = load_espn_snapshot(espn_path, season)
+            diag.add_unmapped("espn", unmapped)
+            return proj
+
+        def _snap_sleeper() -> List[Projection]:
+            proj, unmapped = load_sleeper_snapshot(sleeper_path)
+            diag.add_unmapped("sleeper", unmapped)
+            return proj
+
+        if os.path.exists(espn_path):
+            espn_proj = _try("espn", _snap_espn)
+        else:
+            diag.notes.append(f"no ESPN snapshot (expected data/espn_{season}.json)")
+        if os.path.exists(sleeper_path):
+            sleeper_proj = _try("sleeper", _snap_sleeper)
+        else:
+            diag.notes.append(
+                f"no Sleeper snapshot (expected data/sleeper_{season}.json)")
+
+        projections = blend_projections(espn_proj, sleeper_proj)
+        if projections:
+            diag.source_used = describe_blend(espn_proj, sleeper_proj).replace(
+                "blend ", "snapshot ")
 
     elif source == "sleeper":
         projections = _try("sleeper", _load_sleeper)

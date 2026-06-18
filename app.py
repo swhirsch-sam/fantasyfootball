@@ -37,15 +37,16 @@ FLEX_ELIGIBLE = ("RB", "WR", "TE")
 
 # Bump on each deploy; shown in the sidebar so you can confirm a live deploy is
 # running the latest code (and not a stale cache).
-APP_BUILD = "2026-06-18.3"
+APP_BUILD = "2026-06-18.4"
 
 st.set_page_config(page_title="My Auction War Room", page_icon="🏈", layout="wide")
 
 SOURCE_LABELS = {
-    "sample": "Sample (offline demo data)",
+    "snapshot": "Snapshot — committed ESPN + Sleeper files (recommended)",
     "sleeper": "Sleeper (live)",
     "espn": "ESPN (live)",
     "blend": "Blend — ESPN offense + Sleeper K/DST (live)",
+    "sample": "Sample (offline demo data)",
 }
 POS_ORDER = ["QB", "RB", "WR", "TE", "K", "DST"]
 
