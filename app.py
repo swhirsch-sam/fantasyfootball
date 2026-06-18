@@ -11,7 +11,7 @@ Tabs
 
 from __future__ import annotations
 
-import altair as alt
+import altair as alt  # ships with streamlit (its native charts depend on it)
 import pandas as pd
 import streamlit as st
 

@@ -30,6 +30,26 @@ The app opens with three tabs:
 
 ---
 
+## Run it as a website (no install)
+
+The app is also published as a **static site on GitHub Pages** — it runs
+entirely in your browser via [stlite](https://github.com/whitphx/stlite)
+(Streamlit compiled to WebAssembly), so there's no server and nothing to
+install:
+
+**→ https://swhirsch-sam.github.io/fantasyfootball/**
+
+First load compiles Python in the browser (~20–60s), then it's cached. The
+hosted build uses the bundled SAMPLE data (live ESPN/Sleeper calls can't run
+from a browser due to CORS); for live data, run locally or on
+[Streamlit Community Cloud](https://share.streamlit.io).
+
+The page is generated from the Python sources with `python tools/build_static.py`
+(output: `docs/index.html`). To enable Pages: **Settings → Pages → Deploy from a
+branch → `main` → `/docs`**.
+
+---
+
 ## How values are computed
 
 1. **Score** every player with your scoring rules (`scoring.py`).
