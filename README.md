@@ -43,12 +43,14 @@ You can reach the tool from a browser without a local setup two ways:
   works). It can be made **private** (invite-only by email) in the app
   settings, which suits a personal tool. Deploy from `main` / `app.py` at
   [share.streamlit.io](https://share.streamlit.io).
-- **GitHub Pages (static)** — `docs/index.html` runs the app entirely in the
-  browser via [stlite](https://github.com/whitphx/stlite) (Streamlit on
-  WebAssembly), no server. Note Pages is **public** to anyone with the link,
-  and it uses SAMPLE data only (browsers can't make the live ESPN/Sleeper calls
-  — CORS). Enable via **Settings → Pages → Deploy from a branch → `main` →
-  `/docs`**. The page regenerates with `python tools/build_static.py`.
+- **GitHub Pages (static, public demo)** — `docs/index.html` runs the app
+  entirely in the browser via [stlite](https://github.com/whitphx/stlite)
+  (Streamlit on WebAssembly), no server. It uses SAMPLE data only (browsers
+  can't make the live ESPN/Sleeper calls — CORS) and is **public** to anyone
+  with the link, so treat it as a demo. Enable via **Settings → Pages → Deploy
+  from a branch → `main` → `/docs`**; it then lives at
+  **https://swhirsch-sam.github.io/fantasyfootball/**. Regenerate with
+  `python tools/build_static.py`.
 
 ---
 
