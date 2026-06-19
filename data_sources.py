@@ -188,24 +188,24 @@ def parse_espn_players(
     return projections, unmapped
 
 
-def fetch_espn(
-    season: int, *, timeout: float = 12.0, scoring_period: int = 0
-) -> dict:  # pragma: no cover - network
+def fetch_espn(season: int, *, timeout: float = 12.0) -> dict:  # pragma: no cover
     """Fetch season-long projected player stats from ESPN.
 
-    Uses the public read endpoint with an ``X-Fantasy-Filter`` that asks for
-    the projection stat source. Raises on any network/HTTP error so callers
-    can fall back.
+    Uses the public read endpoint with an ``X-Fantasy-Filter`` asking for the
+    projection stat source (statSourceId=1), season split (statSplitTypeId=0).
+    No ``scoringPeriodId`` is sent — that param is for weekly views and made the
+    season request 400. On any non-200, the response body is surfaced so the
+    real reason (bad season, filter, etc.) is visible in logs.
     """
     if requests is None:
         raise RuntimeError("the 'requests' package is required for live ESPN data")
 
     url = ESPN_BASE_URL.format(season=season)
     fantasy_filter = (
-        '{"players":{"limit":1500,'
+        '{"players":{"limit":2000,'
         '"sortPercOwned":{"sortAsc":false,"sortPriority":1},'
         '"filterStatsForSourceIds":{"value":[1]},'
-        f'"filterStatsForSplitTypeIds":{{"value":[0]}}}}'
+        '"filterStatsForSplitTypeIds":{"value":[0]}}}'
     )
     headers = {
         "X-Fantasy-Filter": fantasy_filter,
@@ -214,9 +214,11 @@ def fetch_espn(
         "User-Agent": "Mozilla/5.0 (dynasty-auction-tool)",
         "Accept": "application/json",
     }
-    params = {"view": "kona_player_info", "scoringPeriodId": scoring_period}
-    resp = requests.get(url, headers=headers, params=params, timeout=timeout)
-    resp.raise_for_status()
+    resp = requests.get(url, headers=headers, params={"view": "kona_player_info"},
+                        timeout=timeout)
+    if resp.status_code != 200:
+        raise RuntimeError(
+            f"ESPN HTTP {resp.status_code} for {season}: {resp.text[:300]}")
     return resp.json()
 
 

@@ -9,6 +9,10 @@ on:
         description: "NFL season to fetch"
         default: "2026"
         required: true
+      skip_sleeper:
+        description: "Skip Sleeper (only refresh ESPN)"
+        type: boolean
+        default: false
   schedule:
     - cron: "0 9 1 * *"     # 09:00 UTC on the 1st of each month
 
@@ -28,7 +32,12 @@ jobs:
       - run: pip install --quiet requests
 
       - name: Fetch snapshot
-        run: python tools/fetch_snapshot.py --season "${{ github.event.inputs.season || '2026' }}"
+        run: |
+          ARGS="--season ${{ github.event.inputs.season || '2026' }}"
+          if [ "${{ github.event.inputs.skip_sleeper }}" = "true" ]; then
+            ARGS="$ARGS --skip-sleeper"
+          fi
+          python tools/fetch_snapshot.py $ARGS
 
       - name: Commit if changed
         run: |

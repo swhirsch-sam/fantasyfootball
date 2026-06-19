@@ -49,36 +49,43 @@ def main(argv=None) -> int:
     ap.add_argument("--season", type=int, default=2026)
     ap.add_argument("--weeks", default="1-17")
     ap.add_argument("--out", default=DATA_DIR)
+    ap.add_argument("--skip-espn", action="store_true", help="don't fetch ESPN")
+    ap.add_argument("--skip-sleeper", action="store_true", help="don't fetch Sleeper")
     args = ap.parse_args(argv)
 
     espn_path, sleeper_path = ds.snapshot_paths(args.season, args.out)
     weeks = _parse_weeks(args.weeks)
     failures = 0
+    attempted = 0
 
-    print(f"Fetching ESPN {args.season} …")
-    try:
-        payload = ds.fetch_espn(args.season)
-        n = len(payload.get("players", []))
-        _write(espn_path, payload)
-        print(f"  ESPN: {n} player records")
-    except Exception as exc:  # noqa: BLE001
-        failures += 1
-        print(f"  ESPN FAILED: {type(exc).__name__}: {exc}")
-        print("  (ESPN sometimes blocks datacenter IPs — try running this "
-              "locally from your own network.)")
+    if not args.skip_espn:
+        attempted += 1
+        print(f"Fetching ESPN {args.season} …")
+        try:
+            payload = ds.fetch_espn(args.season)
+            n = len(payload.get("players", []))
+            _write(espn_path, payload)
+            print(f"  ESPN: {n} player records")
+        except Exception as exc:  # noqa: BLE001
+            failures += 1
+            print(f"  ESPN FAILED: {type(exc).__name__}: {exc}")
+            print("  (ESPN sometimes blocks datacenter IPs — try running this "
+                  "locally from your own network.)")
 
-    print(f"Fetching Sleeper {args.season} weeks {args.weeks} …")
-    try:
-        weeks_data = ds.fetch_sleeper_season(args.season, weeks)
-        total = sum(len(w) for w in weeks_data)
-        _write(sleeper_path, {"season": args.season, "weeks": weeks_data})
-        print(f"  Sleeper: {len(weeks_data)} weeks, {total} rows")
-    except Exception as exc:  # noqa: BLE001
-        failures += 1
-        print(f"  Sleeper FAILED: {type(exc).__name__}: {exc}")
+    if not args.skip_sleeper:
+        attempted += 1
+        print(f"Fetching Sleeper {args.season} weeks {args.weeks} …")
+        try:
+            weeks_data = ds.fetch_sleeper_season(args.season, weeks)
+            total = sum(len(w) for w in weeks_data)
+            _write(sleeper_path, {"season": args.season, "weeks": weeks_data})
+            print(f"  Sleeper: {len(weeks_data)} weeks, {total} rows")
+        except Exception as exc:  # noqa: BLE001
+            failures += 1
+            print(f"  Sleeper FAILED: {type(exc).__name__}: {exc}")
 
-    if failures == 2:
-        print("\nBoth sources failed — nothing written.")
+    if attempted and failures == attempted:
+        print("\nAll attempted sources failed — nothing written.")
         return 1
     print("\nDone. Commit the data/ files to use them via the 'snapshot' source.")
     return 0
