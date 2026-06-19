@@ -37,7 +37,7 @@ FLEX_ELIGIBLE = ("RB", "WR", "TE")
 
 # Bump on each deploy; shown in the sidebar so you can confirm a live deploy is
 # running the latest code (and not a stale cache).
-APP_BUILD = "2026-06-19.1"
+APP_BUILD = "2026-06-19.2"
 
 st.set_page_config(page_title="My Auction War Room", page_icon="🏈", layout="wide")
 
@@ -255,13 +255,6 @@ def analysis_tab(df: pd.DataFrame, valued):
                      "Value $": st.column_config.NumberColumn(format="$%.0f"),
                      "V/$": st.column_config.NumberColumn(format="%.2f"),
                  })
-
-    st.divider()
-    st.subheader("🎯 Tier-1 targets (the must-pay players)")
-    elite = (df[df["Tier"] == 1].sort_values("Value $", ascending=False)
-             [["Player", "Pos", "PosRk", "Proj", "VORP", "Value $"]])
-    st.dataframe(elite, hide_index=True, width="stretch",
-                 column_config={"Value $": st.column_config.NumberColumn(format="$%.0f")})
 
 
 def tiers_tab(df: pd.DataFrame):

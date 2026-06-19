@@ -38,6 +38,15 @@ try:  # requests is optional for the offline/SAMPLE path
 except Exception:  # pragma: no cover - exercised only when requests missing
     requests = None  # type: ignore
 
+__all__ = [
+    "Projection", "Diagnostics", "get_projections", "sample_projections",
+    "blend_projections", "describe_blend", "parse_espn_players",
+    "parse_sleeper_week", "aggregate_sleeper_weeks", "fetch_espn",
+    "fetch_sleeper_season", "load_espn_snapshot", "load_sleeper_snapshot",
+    "snapshot_paths", "normalize_position",
+    "OFFENSE_POSITIONS", "SPECIAL_POSITIONS", "ESPN_STAT_MAP", "SLEEPER_STAT_MAP",
+]
+
 
 # ---------------------------------------------------------------------------
 # Data model
