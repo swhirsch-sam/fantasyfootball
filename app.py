@@ -37,7 +37,7 @@ FLEX_ELIGIBLE = ("RB", "WR", "TE")
 
 # Bump on each deploy; shown in the sidebar so you can confirm a live deploy is
 # running the latest code (and not a stale cache).
-APP_BUILD = "2026-06-18.4"
+APP_BUILD = "2026-06-19.1"
 
 st.set_page_config(page_title="My Auction War Room", page_icon="🏈", layout="wide")
 
@@ -325,6 +325,40 @@ def diagnostics_tab(diag, projections):
                                in DEFAULT_DST_PA_TIERS))
 
 
+def glossary():
+    """A legend at the bottom of the page explaining every term/column."""
+    st.divider()
+    st.subheader("📖 Glossary — what each term means")
+    st.markdown(
+        "**Player columns**\n\n"
+        "| Term | Meaning |\n"
+        "| --- | --- |\n"
+        "| **Proj** | Projected total fantasy points for the season, under your custom scoring. |\n"
+        "| **Pts/G** | Projected points per game (Proj ÷ 17). |\n"
+        "| **Rk** | Rank within the position by projected points (e.g. `RB3` = 3rd-best RB). |\n"
+        "| **VORP** | *Value Over Replacement* — points above the best player who **won't** start in this 16-team league. This is what drives the price. |\n"
+        "| **VOLS** | *Value Over Last Starter* — points above the **worst** starter at the position (a stricter scarcity check than VORP). |\n"
+        "| **Value $** | Recommended auction price — VORP turned into dollars so every team's values sum to the $3,200 pool (16 × $200). |\n"
+        "| **Adj $** | Value $ rescaled for live **inflation** as the draft unfolds. |\n"
+        "| **V/$** | VORP bought per dollar — the bargain signal. Higher = more points-over-replacement for the money. |\n"
+        "| **Tier** | Players grouped by natural drop-offs in value. A tier break is a cliff — act before a tier empties out. |\n"
+        "| **Starter** | Projected to fill a weekly starting slot (including FLEX) somewhere in the league. |\n\n"
+        "**Draft tracker (top of the board)**\n\n"
+        "| Term | Meaning |\n"
+        "| --- | --- |\n"
+        "| **My budget** | Your dollars left of the $200 cap. |\n"
+        "| **Max bid** | The most you can bid right now and still keep $1 for every empty roster spot. |\n"
+        "| **My roster** | Roster spots filled, out of 15. |\n"
+        "| **$/open slot** | Money left ÷ open spots — your average room per remaining pick. |\n"
+        "| **Inflation** | League $ left ÷ value of undrafted players. **>100%** = players going over value (overpaying); **<100%** = bargains on the board. |\n\n"
+        "**Data**\n\n"
+        "| Term | Meaning |\n"
+        "| --- | --- |\n"
+        "| **Snapshot** | Projections from committed files — ESPN offense + Sleeper kickers/defenses — refreshed by the monthly Action. No live API needed at draft time. |\n"
+        "| **VORP / VOLS replacement** | Replacement = the first non-starter at a position; the last starter is the worst projected starter. Both depend on the 16-team roster. |\n"
+    )
+
+
 def main():
     st.title("🏈 My Auction War Room")
     st.caption(f"Personal tool · **{LEAGUE.teams} teams · ${LEAGUE.budget} "
@@ -365,6 +399,8 @@ def main():
         tiers_tab(df)
     with diagnostics:
         diagnostics_tab(diag, projections)
+
+    glossary()
 
 
 if __name__ == "__main__":
