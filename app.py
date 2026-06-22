@@ -115,10 +115,10 @@ def roster_status(my_positions: list[str]) -> pd.DataFrame:
     for p in POS_ORDER:
         rows.append({"Slot": p, "Have": have[p], "Need": need[p],
                      "Fill": f"{filled[p]}/{need[p]}",
-                     "Status": "✅" if filled[p] >= need[p] else f"need {need[p]-filled[p]}"})
+                     "Status": "OK" if filled[p] >= need[p] else f"need {need[p]-filled[p]}"})
     rows.append({"Slot": "FLEX", "Have": flex_used, "Need": flex_need,
                  "Fill": f"{flex_used}/{flex_need}",
-                 "Status": "✅" if flex_used >= flex_need else f"need {flex_need-flex_used}"})
+                 "Status": "OK" if flex_used >= flex_need else f"need {flex_need-flex_used}"})
     rows.append({"Slot": "BENCH", "Have": bench_used, "Need": LEAGUE.bench,
                  "Fill": f"{bench_used}/{LEAGUE.bench}", "Status": ""})
     return pd.DataFrame(rows)
@@ -245,7 +245,7 @@ def analysis_tab(df: pd.DataFrame, valued):
         st.altair_chart(chart, width="stretch")
 
     st.divider()
-    st.subheader("💎 Bargains — most VORP per dollar")
+    st.subheader("Bargains — most VORP per dollar")
     st.caption("Where to find points late: high value-over-replacement for the price.")
     bargains = (df[df["Value $"] >= 1]
                 .sort_values("V/$", ascending=False)
@@ -321,7 +321,7 @@ def diagnostics_tab(diag, projections):
 def glossary():
     """A legend at the bottom of the page explaining every term/column."""
     st.divider()
-    st.subheader("📖 Glossary — what each term means")
+    st.subheader("Glossary — what each term means")
     st.markdown(
         "**Player columns**\n\n"
         "| Term | Meaning |\n"
@@ -362,7 +362,7 @@ def main():
         source = st.selectbox("Projections from", list(SOURCE_LABELS),
                               format_func=lambda s: SOURCE_LABELS[s])
         season = st.number_input("Season", 2020, 2035, 2026, 1)
-        if st.button("↻ Reload data", width="stretch"):
+        if st.button("Reload data", width="stretch"):
             load_projections.clear()
         st.divider()
         st.subheader("League (locked)")
@@ -382,7 +382,7 @@ def main():
         st.warning(f"Showing **{diag.source_used}** data — see the Diagnostics tab.")
 
     board, analysis, tiers, diagnostics = st.tabs(
-        ["💰 Auction Board", "📈 Analysis", "📊 Tiers", "🔎 Diagnostics"]
+        ["Auction Board", "Analysis", "Tiers", "Diagnostics"]
     )
     with board:
         auction_board(df)

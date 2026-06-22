@@ -18,14 +18,14 @@ Verification status (these sites block datacenter IPs, so layouts marked
 "assumed" need one real run to confirm — the scraper prints every table's
 shape and detected columns on each run to make that a 30-second check):
 
-* **Razzball**   — columns fully documented in the brief -> precise map. ✅
+* **Razzball**   — columns fully documented in the brief -> precise map.
 * **FantasyPros**— QB layout documented; RB/WR/TE follow the same nested-header
-  pattern -> group-aware map. ✅ (offense)  K/DST take FPTS.
+  pattern -> group-aware map (offense). K/DST take FPTS.
 * **CBS**        — native PPR; per-position headers not documented -> tolerant
-  synonym map. ⚙ verify columns on first live run.
+  synonym map. Verify columns on first live run.
 * **FFToday**    — classic static table; headers not documented -> tolerant
-  synonym map. ⚙ verify columns on first live run.
-* **FFC ADP**    — market ADP only (not stats); name/pos/ADP extraction. ✅
+  synonym map. Verify columns on first live run.
+* **FFC ADP**    — market ADP only (not stats); name/pos/ADP extraction.
 """
 
 from __future__ import annotations

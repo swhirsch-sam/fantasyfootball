@@ -60,7 +60,7 @@ def main(argv=None):
     print(f"  source requested : {diag.source_requested}")
     print(f"  source used      : {diag.source_used}")
     print(f"  players loaded   : {len(projections)}")
-    print(f"  by position      : "
+    print("  by position      : "
           + ", ".join(f"{p}={diag.counts.get(p, 0)}" for p in POSITIONS))
     if diag.source_counts:
         print("  players per API  : "
@@ -71,11 +71,11 @@ def main(argv=None):
         print(f"  ERROR : {err}")
 
     if diag.unmapped:
-        print("\n  ⚠ UNMAPPED stat keys (review for scoring relevance):")
+        print("\n  UNMAPPED stat keys (review for scoring relevance):")
         for src, keys in diag.unmapped.items():
             print(f"      {src}: {', '.join(sorted(keys))}")
     else:
-        print("\n  ✓ every stat key the source sent was mapped")
+        print("\n  every stat key the source sent was mapped")
     print("=" * 64)
 
     # --- top players per position ------------------------------------------

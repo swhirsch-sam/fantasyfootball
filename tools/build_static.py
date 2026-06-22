@@ -39,7 +39,7 @@ HTML = """<!doctype html>
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>🏈 Dynasty Auction Tool</title>
+  <title>Dynasty Auction Tool</title>
   <link rel="stylesheet" href="{css}" />
   <style>
     html, body {{ margin: 0; height: 100%; }}
@@ -62,7 +62,7 @@ HTML = """<!doctype html>
 <body>
   <div id="root">
     <div id="boot">
-      <h1>🏈 Dynasty Auction Tool</h1>
+      <h1>Dynasty Auction Tool</h1>
       <p><span class="spin"></span>Starting Streamlit in your browser…</p>
       <p style="color:#52606d">First load compiles Python via WebAssembly and
       can take 20–60 seconds. It's cached after that.</p>

@@ -28,10 +28,10 @@ The app has four tabs:
 
 | Tab | What it does |
 | --- | --- |
-| 💰 **Auction Board** | Every player priced in $, with **pos rank, Pts/G, VORP, VOLS, value-per-dollar, tier** and inflation-adjusted $. A live tracker shows your **budget, max bid, roster slots filled, and positional needs** as you tick off picks. |
-| 📈 **Analysis** | **Budget allocation** (how the market should split your $200 across positions), **positional scarcity** (starter cliffs), a **bargain finder** (best VORP/$), and tier-1 must-pay targets. |
-| 📊 **Tiers** | A per-position tier-break visual so you can see the cliffs. |
-| 🔎 **Diagnostics** | Which source was used, coverage by position, and any **unmapped stat keys** — the early-warning signal that a source changed its schema. |
+| **Auction Board** | Every player priced in $, with **pos rank, Pts/G, VORP, VOLS, value-per-dollar, tier** and inflation-adjusted $. A live tracker shows your **budget, max bid, roster slots filled, and positional needs** as you tick off picks. |
+| **Analysis** | **Budget allocation** (how the market should split your $200 across positions), **positional scarcity** (starter cliffs), a **bargain finder** (best VORP/$), and tier-1 must-pay targets. |
+| **Tiers** | A per-position tier-break visual so you can see the cliffs. |
+| **Diagnostics** | Which source was used, coverage by position, and any **unmapped stat keys** — the early-warning signal that a source changed its schema. |
 
 ---
 
@@ -109,12 +109,12 @@ mapping is verified offline by pushing realistic payloads through them
 
 | Piece | Status | Verified against |
 | --- | --- | --- |
-| **ESPN offense IDs** (3=passYds, 4=passTD, 20=INT, 24=rushYds, 25=rushTD, 53=rec, 42=recYds, 43=recTD, 72=lostFum, 19/26/44=2pt) | ✅ correct | canonical `espn-api` `STATS_MAP` (1:1) |
-| **Sleeper offense keys** (`pass_yd`, `rush_yd`, `rec_yd`, `rec`, `fum_lost`, …) | ✅ correct | Sleeper projection schema |
-| **Sleeper kicker buckets** (`fgm_0_19`…`fgm_50p`, `xpm`, `xpmiss`) | ✅ correct | Sleeper `PlayerStats` schema |
-| **Sleeper DST** (`pts_allow`, `sack`, `int`, `fum_rec`, `def_td`, `safe`, `blk_kick`) | ✅ correct | same |
-| **Sleeper missed-FG keys** | 🔧 fixed | Sleeper only buckets misses at 30-39 / 40-49 / 50+, so they collapse into one `fgmiss`; the non-existent `fgmiss_0_19`/`fgmiss_20_29` are gone |
-| **ESPN K/DST** | ⚙️ intentionally unmapped | ESPN's points-allowed/FG buckets don't line up with this league's tiers, so the **blend** takes offense from ESPN and K/DST from Sleeper |
+| **ESPN offense IDs** (3=passYds, 4=passTD, 20=INT, 24=rushYds, 25=rushTD, 53=rec, 42=recYds, 43=recTD, 72=lostFum, 19/26/44=2pt) | correct | canonical `espn-api` `STATS_MAP` (1:1) |
+| **Sleeper offense keys** (`pass_yd`, `rush_yd`, `rec_yd`, `rec`, `fum_lost`, …) | correct | Sleeper projection schema |
+| **Sleeper kicker buckets** (`fgm_0_19`…`fgm_50p`, `xpm`, `xpmiss`) | correct | Sleeper `PlayerStats` schema |
+| **Sleeper DST** (`pts_allow`, `sack`, `int`, `fum_rec`, `def_td`, `safe`, `blk_kick`) | correct | same |
+| **Sleeper missed-FG keys** | fixed | Sleeper only buckets misses at 30-39 / 40-49 / 50+, so they collapse into one `fgmiss`; the non-existent `fgmiss_0_19`/`fgmiss_20_29` are gone |
+| **ESPN K/DST** | intentionally unmapped | ESPN's points-allowed/FG buckets don't line up with this league's tiers, so the **blend** takes offense from ESPN and K/DST from Sleeper |
 
 ### The `blend` source
 `blend` = **ESPN offense + Sleeper kickers/defenses** — the cleanest of each,

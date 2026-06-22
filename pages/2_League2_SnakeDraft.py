@@ -31,7 +31,7 @@ TEAMS = 8
 _TIER_COLORS = ["#1b9e77", "#7570b3", "#d95f02", "#e7298a", "#66a61e",
                 "#a6761d", "#666666"]
 
-st.set_page_config(page_title="League 2 — Snake Draft", page_icon="🐍", layout="wide")
+st.set_page_config(page_title="League 2 — Snake Draft", layout="wide")
 
 
 @st.cache_data(show_spinner="Loading the draft board…")
@@ -45,7 +45,7 @@ def load_board():
 
 
 def _confidence(n: int) -> str:
-    return {4: "✅ 4", 3: "◑ 3"}.get(int(n), f"⚠ {int(n)}")
+    return str(int(n))
 
 
 def _tier_style(val):
@@ -57,7 +57,11 @@ def _tier_style(val):
 
 
 def _conf_style(val):
-    return "background-color: #ffe08a;" if str(val).startswith("⚠") else ""
+    try:
+        thin = int(val) <= 2
+    except (ValueError, TypeError):
+        return ""
+    return "background-color: #ffe08a;" if thin else ""
 
 
 def _vva_style(val):
@@ -86,7 +90,7 @@ def provenance_banner(meta: dict):
         cov = ", ".join(f"{k}={v}" for k, v in sorted(counts.items()))
         st.caption(f"Live projections · built {when} · rows per source: {cov or 'n/a'}")
     if meta.get("errors"):
-        with st.expander(f"⚠ {len(meta['errors'])} source error(s) on last refresh"):
+        with st.expander(f"{len(meta['errors'])} source error(s) on last refresh"):
             for e in meta["errors"]:
                 st.text(e)
 
@@ -136,8 +140,9 @@ def board_tab(df: pd.DataFrame):
                  "Val vs ADP": "{:+.0f}"}, na_rep="—")
     )
     st.dataframe(styler, hide_index=True, height=560, width="stretch")
-    st.caption(f"{len(disp)} players shown. Confidence: ✅ all 4 sources · "
-               "◑ 3 · ⚠ 1–2 (thin coverage — verify before trusting).")
+    st.caption(f"{len(disp)} players shown. Conf = number of sources "
+               "(4 = all; 1–2 = thin coverage, highlighted — verify "
+               "before trusting).")
 
 
 def tiers_tab(df: pd.DataFrame):
@@ -171,13 +176,13 @@ def market_tab(df: pd.DataFrame):
 
     c1, c2 = st.columns(2)
     with c1:
-        st.markdown("**💎 Values** — market lets them slide past your rank")
+        st.markdown("**Values** — market lets them slide past your rank")
         val = have_adp.sort_values("value_vs_adp", ascending=False).head(15)
         st.dataframe(val[["name", "pos", "overall_rank", "market_adp", "Val vs ADP"]],
                      hide_index=True, width="stretch",
                      column_config={"overall_rank": "Your Rk", "market_adp": "ADP"})
     with c2:
-        st.markdown("**🛑 Reaches** — market drafts them well above your rank")
+        st.markdown("**Reaches** — market drafts them well above your rank")
         rea = have_adp.sort_values("value_vs_adp").head(15)
         st.dataframe(rea[["name", "pos", "overall_rank", "market_adp", "Val vs ADP"]],
                      hide_index=True, width="stretch",
@@ -207,7 +212,7 @@ def data_tab(df: pd.DataFrame, meta: dict):
 
 
 def main():
-    st.title("🐍 League 2 — 8-Team 2QB PPR Snake Draft")
+    st.title("League 2 — 8-Team 2QB PPR Snake Draft")
     st.caption("Ranked VORP board (not auction $). Starters/team: "
                "**2QB · 2RB · 3WR · 3FLEX · 1K · 1DEF** — full PPR. "
                "Use the sidebar page nav to switch to the auction league.")
@@ -229,7 +234,7 @@ def main():
             "- FLEX = RB/WR/TE (no dedicated TE slot)\n"
             "- 16 of 96 starters are **QB** → QB2s have real value\n"
             "- Edit rules in `league2/scoring.py`")
-        if st.button("↻ Reload board", width="stretch"):
+        if st.button("Reload board", width="stretch"):
             load_board.clear()
             st.rerun()
 
@@ -246,7 +251,7 @@ def main():
             "site's scoring quirk skews a player.")
 
     board, tiers, market, data = st.tabs(
-        ["🐍 Draft Board", "📊 Tiers", "🆚 Model vs Market", "🔎 Data"])
+        ["Draft Board", "Tiers", "Model vs Market", "Data"])
     with board:
         board_tab(df)
     with tiers:
