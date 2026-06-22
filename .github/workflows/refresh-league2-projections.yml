@@ -1,0 +1,46 @@
+name: refresh-league2-projections
+
+# Scrapes the five League #2 sources and commits data/league2_projections.csv so
+# the Streamlit page (pages/2_League2_SnakeDraft.py) only ever reads a pre-built
+# file. The scraper degrades gracefully: if a site 403s GitHub's datacenter IPs
+# (likely), it falls back to the bundled sample so a usable CSV always lands —
+# data/league2_projections.meta.json records what each source returned.
+on:
+  workflow_dispatch:
+    inputs:
+      season:
+        description: "NFL season to scrape"
+        default: "2026"
+        required: true
+  schedule:
+    - cron: "0 13 * * 1,4"   # 13:00 UTC Mon/Thu during draft season; adjust as needed
+
+permissions:
+  contents: write            # allow the workflow to commit the refreshed CSV
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install --quiet requests pandas lxml
+
+      - name: Scrape projections
+        run: python scripts/scrape_league2_projections.py --season ${{ github.event.inputs.season || '2026' }}
+
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/league2_projections.csv data/league2_projections.meta.json
+          if git diff --staged --quiet; then
+            echo "No projection changes to commit."
+          else
+            git commit -m "Refresh league 2 projections ($(date -u +%Y-%m-%d))"
+            git push
+          fi

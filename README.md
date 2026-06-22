@@ -146,9 +146,75 @@ valuation.py           VBD: replacement levels, VORP, dollar values, tiers
 tools/preview_live.py  Terminal preview / live-data sanity check
 tests/                 Scoring, parser, and valuation tests
 .claude/               SessionStart hook so web sessions install deps
+
+league2/               League #2 — 8-team 2QB PPR snake tool (separate league)
+  scoring.py           PPR_SCORING, LEAGUE_CONFIG, score_player, normalize_name
+  vorp.py              iterative 2QB/FLEX replacement levels + VORP + tiers
+  aggregate.py         median blend across sources -> ranked draft board
+  sources.py           pure per-source HTML-table normalizers (verifiable offline)
+  sample.py            realistic offline data so the board works with no scrape
+scripts/scrape_league2_projections.py   the five HTML scrapers -> data CSV
+pages/2_League2_SnakeDraft.py            Streamlit page (reads the CSV only)
 ```
 
 ---
+
+## League #2 — 8-team · 2QB · full-PPR snake draft (separate tool)
+
+A second league lives alongside the auction tool in the **`league2/`** package
+and a sibling Streamlit page. It is deliberately *not* a clone — different
+league, different math, different data pipeline:
+
+| | Auction tool (root) | League #2 (`league2/`) |
+| --- | --- | --- |
+| Format | 16-team **auction** | 8-team **snake** |
+| Output | dollar values | ranked **VORP board + tiers** (no $) |
+| Lineup | 1 QB | **2 QB** · 2RB · 3WR · 3FLEX · 1K · 1DEF (no TE slot) |
+| Sources | ESPN + Sleeper JSON | 5 HTML sites, **median**-blended |
+
+The headline structural fact is **2 QB**: 16 of the league's 96 starting spots
+are QB, so QB replacement level sits much deeper and backup-caliber QBs carry
+real value. The VORP allocator (`league2/vorp.py`) reproduces that — and the
+"only elite TEs matter" effect (TEs start only via FLEX) — without hardcoding
+either.
+
+### How the board is built
+1. **Scrape** five sources — FantasyPros, CBS, FFToday, Razzball (projections)
+   and Fantasy Football Calculator (ADP, market cross-check only).
+2. **Recompute** points from each source's *raw* stat columns through one shared
+   PPR formula (`league2/scoring.py`) — sites disagree on default scoring
+   (FantasyPros' free tables are Standard, not PPR), so never trust their FPTS
+   column for offense. K/DEF take the site FPTS directly.
+3. **Median**-aggregate across sources by `(normalize_name, pos)`, keeping
+   `n_sources` as a confidence flag (thin coverage = trust less).
+4. **VORP** via the iterative lineup allocation, then within-position tiers from
+   VORP cliffs, then a left-join of FFC ADP as `value_vs_adp = market_adp −
+   overall_rank` (positive = the market lets him slide past your rank).
+
+### Running it
+```bash
+python scripts/scrape_league2_projections.py            # scrape -> data CSV
+python scripts/scrape_league2_projections.py --sample   # offline rebuild
+streamlit run app.py        # the sidebar page nav switches between leagues
+pytest -q                   # league2 logic is unit-tested offline
+```
+
+Data flows the same robust way as the auction tool: a **GitHub Action**
+(`refresh-league2-projections`) scrapes on a schedule and commits
+`data/league2_projections.csv`; the Streamlit page only ever *reads* that file
+(it never scrapes), so it works on Streamlit Cloud / Pages where the sources
+would 403.
+
+> **Scraper provenance.** The five sites block datacenter IPs (CI, cloud,
+> sandboxes all get **403**), so the scraper is resilient: each source is fetched
+> independently, and if none return data it falls back to bundled sample data so
+> a usable CSV always lands. Every run prints — and writes to
+> `data/league2_projections.meta.json` — what each source returned (including
+> each page's table shapes). **Razzball** and **FantasyPros** column maps are
+> verified against the documented layouts; **CBS** and **FFToday** use tolerant
+> synonym maps and should be eyeballed against the printed columns on the first
+> real (non-403) run. Defense names vary across sources (city vs. nickname), so
+> DEF is the weakest cross-source join — sanity-check it.
 
 ## Notes
 - Built to run on [Claude Code on the web](https://code.claude.com/docs); the

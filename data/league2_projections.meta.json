@@ -1,0 +1,14 @@
+{
+  "generated_at": "2026-06-22T18:27:09+00:00",
+  "season": 2026,
+  "counts": {},
+  "errors": [],
+  "fallback_to_sample": true,
+  "players": 165,
+  "source_columns": [
+    "pts_cbs",
+    "pts_fantasypros",
+    "pts_fftoday",
+    "pts_razzball"
+  ]
+}
