@@ -28,7 +28,7 @@ The app has four tabs:
 
 | Tab | What it does |
 | --- | --- |
-| 💰 **Auction Board** | Every player priced in $, with **pos rank, Pts/G, VORP, VOLS, value-per-dollar, tier** and inflation-adjusted $. A live tracker shows your **budget, max bid, roster slots filled, and positional needs** as you tick off picks. |
+| 💰 **Auction Board** | Every player priced in $, with **pos rank, Pts/G, VORP, VOLS, value-per-dollar, and tier**. A live tracker shows your **budget, max bid, roster slots filled, and positional needs** as you tick off picks. |
 | 📈 **Analysis** | **Budget allocation** (how the market should split your $200 across positions), **positional scarcity** (starter cliffs), a **bargain finder** (best VORP/$), and tier-1 must-pay targets. |
 | 📊 **Tiers** | A per-position tier-break visual so you can see the cliffs. |
 | 🔎 **Diagnostics** | Which source was used, coverage by position, and any **unmapped stat keys** — the early-warning signal that a source changed its schema. |
@@ -71,7 +71,7 @@ You can reach the tool from a browser without a local setup two ways:
 | **Pos rank** | Rank within position (e.g. `RB3`). |
 | **Pts/G** | Projected points per game. |
 | **VORP / VOLS** | Value over replacement / over the last starter. |
-| **Value $ / Adj $** | Auction value, and value re-scaled for live draft **inflation**. |
+| **Value $** | Recommended auction price — VORP turned into dollars. |
 | **V/$** | VORP bought per dollar — the **bargain** signal. |
 | **Tier** | Auto-detected from value drop-offs within the position. |
 

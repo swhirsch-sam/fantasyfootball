@@ -35,9 +35,13 @@ LEAGUE = LeagueSettings(
 )
 FLEX_ELIGIBLE = ("RB", "WR", "TE")
 
+# The season is locked too — this is a personal, single-season tool. Bump it
+# here in code (and refresh the data/ snapshot) when the next season opens.
+SEASON = 2026
+
 # Bump on each deploy; shown in the sidebar so you can confirm a live deploy is
 # running the latest code (and not a stale cache).
-APP_BUILD = "2026-06-19.2"
+APP_BUILD = "2026-06-22.1"
 
 st.set_page_config(page_title="My Auction War Room", page_icon="🏈", layout="wide")
 
@@ -130,8 +134,6 @@ def roster_status(my_positions: list[str]) -> pd.DataFrame:
 def auction_board(df: pd.DataFrame):
     draft = _draft_state(df.index)
 
-    pool = LEAGUE.teams * LEAGUE.budget
-    spent = float((draft["Paid"] * draft["Drafted"]).sum())
     my_mask = draft["Mine"] & draft["Drafted"]
     my_spent = float((draft["Paid"] * my_mask).sum())
     my_count = int(my_mask.sum())
@@ -139,18 +141,11 @@ def auction_board(df: pd.DataFrame):
     my_left = LEAGUE.budget - my_spent
     max_bid = my_left - max(slots_left - 1, 0)
 
-    undrafted = df[~draft["Drafted"]]
-    remaining_value = float(undrafted["Value $"].clip(lower=0).sum())
-    remaining_pool = pool - spent
-    inflation = remaining_pool / remaining_value if remaining_value > 0 else 1.0
-
-    m = st.columns(5)
+    m = st.columns(4)
     m[0].metric("My budget", f"${my_left:,.0f}", f"of ${LEAGUE.budget}")
     m[1].metric("Max bid", f"${max_bid:,.0f}")
     m[2].metric("My roster", f"{my_count}/{LEAGUE.roster_size}", f"{slots_left} open")
     m[3].metric("$/open slot", f"${(my_left/slots_left if slots_left else 0):,.0f}")
-    m[4].metric("Inflation", f"{inflation:.0%}",
-                help="League $ left ÷ remaining player value. >100% = values hot.")
 
     left, right = st.columns([3, 1])
     with right:
@@ -165,7 +160,6 @@ def auction_board(df: pd.DataFrame):
         hide_drafted = f[2].checkbox("Hide drafted", value=True)
 
         view = df.copy()
-        view["Adj $"] = (view["Value $"] * inflation).round(1)
         view = view.join(draft)
         if pos != "ALL":
             view = view[view["Pos"] == pos]
@@ -179,7 +173,7 @@ def auction_board(df: pd.DataFrame):
         edited = st.data_editor(
             view, width="stretch", hide_index=True, height=520,
             column_order=["Player", "Pos", "PosRk", "Team", "Proj", "Pts/G",
-                          "VORP", "VOLS", "Value $", "Adj $", "V/$", "Tier",
+                          "VORP", "VOLS", "Value $", "V/$", "Tier",
                           "Drafted", "Paid", "Mine"],
             column_config={
                 "Player": st.column_config.TextColumn(disabled=True),
@@ -195,8 +189,6 @@ def auction_board(df: pd.DataFrame):
                 "VOLS": st.column_config.NumberColumn(disabled=True, format="%.1f",
                     help="Value over last starter"),
                 "Value $": st.column_config.NumberColumn(disabled=True, format="$%.1f"),
-                "Adj $": st.column_config.NumberColumn(disabled=True, format="$%.1f",
-                    help="Value adjusted for live draft inflation"),
                 "V/$": st.column_config.NumberColumn(disabled=True, format="%.2f",
                     help="VORP per dollar — the bargain signal"),
                 "Tier": st.column_config.NumberColumn(disabled=True),
@@ -332,7 +324,6 @@ def glossary():
         "| **VORP** | *Value Over Replacement* — points above the best player who **won't** start in this 16-team league. This is what drives the price. |\n"
         "| **VOLS** | *Value Over Last Starter* — points above the **worst** starter at the position (a stricter scarcity check than VORP). |\n"
         "| **Value $** | Recommended auction price — VORP turned into dollars so every team's values sum to the $3,200 pool (16 × $200). |\n"
-        "| **Adj $** | Value $ rescaled for live **inflation** as the draft unfolds. |\n"
         "| **V/$** | VORP bought per dollar — the bargain signal. Higher = more points-over-replacement for the money. |\n"
         "| **Tier** | Players grouped by natural drop-offs in value. A tier break is a cliff — act before a tier empties out. |\n"
         "| **Starter** | Projected to fill a weekly starting slot (including FLEX) somewhere in the league. |\n\n"
@@ -342,8 +333,7 @@ def glossary():
         "| **My budget** | Your dollars left of the $200 cap. |\n"
         "| **Max bid** | The most you can bid right now and still keep $1 for every empty roster spot. |\n"
         "| **My roster** | Roster spots filled, out of 15. |\n"
-        "| **$/open slot** | Money left ÷ open spots — your average room per remaining pick. |\n"
-        "| **Inflation** | League $ left ÷ value of undrafted players. **>100%** = players going over value (overpaying); **<100%** = bargains on the board. |\n\n"
+        "| **$/open slot** | Money left ÷ open spots — your average room per remaining pick. |\n\n"
         "**Data**\n\n"
         "| Term | Meaning |\n"
         "| --- | --- |\n"
@@ -361,20 +351,19 @@ def main():
         st.header("Data")
         source = st.selectbox("Projections from", list(SOURCE_LABELS),
                               format_func=lambda s: SOURCE_LABELS[s])
-        season = st.number_input("Season", 2020, 2035, 2026, 1)
         if st.button("↻ Reload data", width="stretch"):
             load_projections.clear()
         st.divider()
         st.subheader("League (locked)")
         st.markdown(
-            f"- **{LEAGUE.teams}** teams · **${LEAGUE.budget}** budget\n"
+            f"- **{LEAGUE.teams}** teams · **${LEAGUE.budget}** budget · **{SEASON}** season\n"
             "- Start: QB·RB·RB·WR·WR·TE·FLEX·K·DST\n"
             f"- Bench: {LEAGUE.bench} · Scoring: full PPR\n"
             "- Edit rules in `scoring.py` / `app.py`"
         )
         st.caption(f"build {APP_BUILD}")
 
-    projections, diag = load_projections(source, int(season))
+    projections, diag = load_projections(source, SEASON)
     valued = compute_values(projections, Scoring(), LEAGUE)
     df = build_dataframe(valued)
 
