@@ -39,7 +39,7 @@ FLEX_ELIGIBLE = ("RB", "WR", "TE")
 # running the latest code (and not a stale cache).
 APP_BUILD = "2026-06-19.2"
 
-st.set_page_config(page_title="My Auction War Room", page_icon="🏈", layout="wide")
+st.set_page_config(page_title="Auction Draft", layout="wide")
 
 SOURCE_LABELS = {
     "snapshot": "Snapshot — committed ESPN + Sleeper files (recommended)",
@@ -353,7 +353,7 @@ def glossary():
 
 
 def main():
-    st.title("🏈 My Auction War Room")
+    st.title("Auction Draft")
     st.caption(f"Personal tool · **{LEAGUE.teams} teams · ${LEAGUE.budget} "
                f"budget** · {LEAGUE.roster_size}-man rosters · full PPR")
 

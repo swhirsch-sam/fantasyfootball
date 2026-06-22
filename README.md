@@ -1,4 +1,4 @@
-# 🏈 My Auction War Room
+# Auction Draft
 
 A **personal** fantasy-football auction draft tool, hard-wired to one league:
 **16 teams · $200 budget · full PPR**. It pulls projections from ESPN and/or
