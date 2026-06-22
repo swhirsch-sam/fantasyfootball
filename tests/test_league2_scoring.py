@@ -61,4 +61,4 @@ def test_league_config_is_2qb_and_flex_excludes_qb():
     assert LEAGUE_CONFIG["roster"]["QB"] == 2          # the headline structural fact
     assert "TE" in LEAGUE_CONFIG["flex_eligible"]
     assert "QB" not in LEAGUE_CONFIG["flex_eligible"]  # not a superflex
-    assert "TE" not in LEAGUE_CONFIG["roster"]          # no dedicated TE slot
+    assert LEAGUE_CONFIG["roster"]["TE"] == 1            # one dedicated TE slot

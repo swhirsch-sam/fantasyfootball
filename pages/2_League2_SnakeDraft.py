@@ -24,14 +24,14 @@ META_PATH = os.path.join(ROOT, "data", "league2_projections.meta.json")
 
 POS_ORDER = ["QB", "RB", "WR", "TE", "K", "DEF"]
 # League structural facts (kept in sync with league2/scoring.py LEAGUE_CONFIG).
-ROSTER = {"QB": 2, "RB": 2, "WR": 3, "FLEX": 3, "K": 1, "DEF": 1}
+ROSTER = {"QB": 2, "RB": 2, "WR": 3, "TE": 1, "FLEX": 3, "K": 1, "DEF": 1}
 TEAMS = 8
 
 # Categorical tier palette (tier is computed from VORP gaps per position).
 _TIER_COLORS = ["#1b9e77", "#7570b3", "#d95f02", "#e7298a", "#66a61e",
                 "#a6761d", "#666666"]
 
-st.set_page_config(page_title="League 2 — Snake Draft", layout="wide")
+st.set_page_config(page_title="League 2 — Snake Draft", page_icon="🏈", layout="wide")
 
 
 @st.cache_data(show_spinner="Loading the draft board…")
@@ -44,24 +44,12 @@ def load_board():
     return df, meta
 
 
-def _confidence(n: int) -> str:
-    return str(int(n))
-
-
 def _tier_style(val):
     try:
         c = _TIER_COLORS[(int(val) - 1) % len(_TIER_COLORS)]
     except (ValueError, TypeError):
         return ""
     return f"background-color: {c}; color: white; font-weight: 600;"
-
-
-def _conf_style(val):
-    try:
-        thin = int(val) <= 2
-    except (ValueError, TypeError):
-        return ""
-    return "background-color: #ffe08a;" if thin else ""
 
 
 def _vva_style(val):
@@ -96,20 +84,16 @@ def provenance_banner(meta: dict):
 
 
 def board_tab(df: pd.DataFrame):
-    c = st.columns([2, 3, 2, 2])
+    c = st.columns([2, 3, 2])
     pos = c[0].selectbox("Position", ["ALL"] + POS_ORDER)
     query = c[1].text_input("Search player")
-    min_src = c[2].select_slider("Min sources", options=[1, 2, 3, 4], value=1,
-                                 help="Hide players covered by fewer than N "
-                                      "sources — the low-confidence rookies/backups.")
-    hide_special = c[3].checkbox("Hide K/DEF", value=False)
+    hide_special = c[2].checkbox("Hide K/DEF", value=False)
 
-    view = df.copy()
+    view = df[df["n_sources"] >= 4].copy()
     if pos != "ALL":
         view = view[view["pos"] == pos]
     if query:
         view = view[view["name"].str.contains(query, case=False, na=False)]
-    view = view[view["n_sources"] >= min_src]
     if hide_special:
         view = view[~view["pos"].isin(["K", "DEF"])]
 
@@ -123,26 +107,40 @@ def board_tab(df: pd.DataFrame):
         "Tier": view["tier"],
         "Proj": view["agg_points"].round(1),
         "VORP": view["vorp"].round(1),
-        "Conf": view["n_sources"].map(_confidence),
         "ADP": view["market_adp"],
         "Val vs ADP": view["value_vs_adp"],
     })
 
-    st.caption("Sorted by **VORP**. **Tier** breaks are VORP cliffs (act before a "
-               "tier empties). **Val vs ADP** > 0 = the market lets him slide past "
-               "your rank (a value); < 0 = you'd reach vs the market.")
+    st.caption("Sorted by **VORP**. **Tier** breaks are VORP cliffs — draft "
+               "before a tier empties. **Val vs ADP** > 0 = the market lets "
+               "him slide past your rank; < 0 = you'd reach vs the market.")
     styler = (
         disp.style
         .map(_tier_style, subset=["Tier"])
-        .map(_conf_style, subset=["Conf"])
         .map(_vva_style, subset=["Val vs ADP"])
         .format({"Proj": "{:.1f}", "VORP": "{:+.1f}", "ADP": "{:.0f}",
                  "Val vs ADP": "{:+.0f}"}, na_rep="—")
     )
     st.dataframe(styler, hide_index=True, height=560, width="stretch")
-    st.caption(f"{len(disp)} players shown. Conf = number of sources "
-               "(4 = all; 1–2 = thin coverage, highlighted — verify "
-               "before trusting).")
+    st.caption(f"{len(disp)} players · aggregated from all 4 sources.")
+
+    with st.expander("Term definitions"):
+        st.markdown(
+            "**Rk** — Overall board rank by VORP (1 = most valuable).\n\n"
+            "**PosRk** — Rank within position (e.g. WR4 = 4th WR on the board).\n\n"
+            "**Tier** — Grouping of players at similar value. "
+            "When a tier runs out the next player is a meaningful step down — "
+            "draft before those cliffs.\n\n"
+            "**Proj** — Projected PPR points, median-aggregated across all 4 sources.\n\n"
+            "**VORP** — Value Over Replacement Player. Points above the best "
+            "undrafted player at that position once all starters are rostered. "
+            "Higher = more valuable. Negative = below replacement.\n\n"
+            "**ADP** — Average Draft Position from Fantasy Football Calculator "
+            "mock drafts — where the market consensus is picking this player.\n\n"
+            "**Val vs ADP** — Your VORP rank minus market ADP. "
+            "Positive means the market lets him slide past your rank (a value); "
+            "negative means the market reaches for him above your rank."
+        )
 
 
 def tiers_tab(df: pd.DataFrame):
@@ -171,7 +169,7 @@ def market_tab(df: pd.DataFrame):
     st.subheader("Model vs market (ADP cross-check)")
     st.caption("Where your VORP board and the live mock-draft market most "
                "disagree. Investigate before trusting either side.")
-    have_adp = df[df["market_adp"].notna()].copy()
+    have_adp = df[df["market_adp"].notna() & ~df["pos"].isin(["K", "DEF"])].copy()
     have_adp["Val vs ADP"] = have_adp["value_vs_adp"]
 
     c1, c2 = st.columns(2)
@@ -214,7 +212,7 @@ def data_tab(df: pd.DataFrame, meta: dict):
 def main():
     st.title("League 2 — 8-Team 2QB PPR Snake Draft")
     st.caption("Ranked VORP board (not auction $). Starters/team: "
-               "**2QB · 2RB · 3WR · 3FLEX · 1K · 1DEF** — full PPR. "
+               "**2QB · 2RB · 3WR · 1TE · 3FLEX · 1K · 1DEF** — full PPR. "
                "Use the sidebar page nav to switch to the auction league.")
 
     if not os.path.exists(CSV_PATH):
@@ -230,9 +228,8 @@ def main():
         st.header("League 2 (locked)")
         st.markdown(
             f"- **{TEAMS}** teams · **snake** · full PPR\n"
-            "- Start: 2QB · 2RB · 3WR · 3FLEX · 1K · 1DEF\n"
-            "- FLEX = RB/WR/TE (no dedicated TE slot)\n"
-            "- 16 of 96 starters are **QB** → QB2s have real value\n"
+            "- Start: 2QB · 2RB · 3WR · 1TE · 3FLEX · 1K · 1DEF\n"
+            "- FLEX = RB/WR/TE\n"
             "- Edit rules in `league2/scoring.py`")
         if st.button("Reload board", width="stretch"):
             load_board.clear()
@@ -240,15 +237,14 @@ def main():
 
     with st.expander("Why this board looks different from a 1-QB league"):
         st.markdown(
-            "- **2 QB starters × 8 teams = 16 QB starting spots**, so QB "
-            "replacement level sits at ~QB17 — backup-caliber QBs still beat "
-            "replacement, so they carry real draft value.\n"
-            "- **No dedicated TE slot**: tight ends only start through FLEX, "
-            "competing with RB/WR. Replacement TE is very low, so only the "
-            "elite few clear it — everyone else is roughly replacement-level.\n"
+            "- **2 QB starters per team** push QB replacement level to ~QB17 — "
+            "backup-caliber QBs carry real draft value.\n"
+            "- **1 dedicated TE slot per team**, plus TEs can fill FLEX. "
+            "Only the top 8 or so TEs hold significant value above replacement; "
+            "the position drops off sharply after that.\n"
             "- Points are **recomputed from raw stats** through one shared PPR "
-            "formula for every source, then **median**-aggregated, so no single "
-            "site's scoring quirk skews a player.")
+            "formula for every source, then **median**-aggregated across all 4 "
+            "sources, so no single site's scoring quirk skews a player.")
 
     board, tiers, market, data = st.tabs(
         ["Draft Board", "Tiers", "Model vs Market", "Data"])

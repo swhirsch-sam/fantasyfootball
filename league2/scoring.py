@@ -5,9 +5,9 @@ app at the repo root.  It is its own league with its own structural facts:
 
 * 8 teams, full PPR, standard **snake** draft (output is a ranked board /
   tiers, not auction dollars).
-* Roster: ``2 QB · 2 RB · 3 WR · 3 FLEX · 1 K · 1 DEF`` — 12 starters/team,
-  96 league-wide.  No dedicated TE slot; TEs only start via FLEX.
-* The headline fact: **16 of the 96 starting spots are QB**, so QB replacement
+* Roster: ``2 QB · 2 RB · 3 WR · 1 TE · 3 FLEX · 1 K · 1 DEF`` — 13 starters/team,
+  104 league-wide.  1 dedicated TE slot per team; TEs are also FLEX-eligible.
+* The headline fact: **16 of the 104 starting spots are QB**, so QB replacement
   level sits much deeper than a 1-QB league and backup-caliber QBs carry real
   startable value.  The VORP math in :mod:`league2.vorp` reflects that rather
   than reusing the dynasty league's positional curves.
@@ -51,6 +51,7 @@ LEAGUE_CONFIG: Dict = {
         "QB": 2,
         "RB": 2,
         "WR": 3,
+        "TE": 1,     # dedicated slot; TEs also compete for FLEX
         "FLEX": 3,   # shared pool
         "K": 1,
         "DEF": 1,

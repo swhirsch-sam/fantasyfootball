@@ -20,7 +20,7 @@ def _pool():
     add("TE", 25, 300)
     add("K", 15, 150)
     add("DEF", 15, 140)
-    # Two elite TEs that can beat RB/WR for a FLEX slot.
+    # Two elite TEs that easily fill the dedicated TE slot.
     rows.append({"name": "EliteTE1", "pos": "TE", "agg_points": 372})
     rows.append({"name": "EliteTE2", "pos": "TE", "agg_points": 356})
     return pd.DataFrame(rows)
@@ -37,18 +37,18 @@ def test_qb_replacement_is_deep_in_2qb():
 
 def test_total_starters_match_the_lineup():
     board = compute_vorp(_pool())
-    # dedicated 16+16+24+8+8 = 72, plus 3*8 = 24 FLEX -> 96 starters league-wide
-    assert int(board.is_starter.sum()) == 96
+    # dedicated 16+16+24+8+8+8 = 80, plus 3*8 = 24 FLEX -> 104 starters league-wide
+    assert int(board.is_starter.sum()) == 104
 
 
 def test_only_elite_tes_clear_a_flex_slot():
     board = compute_vorp(_pool())
     assert board[board.name == "EliteTE1"].iloc[0].is_starter
     assert board[board.name == "EliteTE2"].iloc[0].is_starter
-    # a mid TE does not start: TEs compete with RB/WR for FLEX and lose
+    # a mid TE does not start: dedicated slot fills with the top 8 TEs only
     assert not board[board.name == "TE10"].iloc[0].is_starter
     reps, _ = replacement_levels(_pool().reset_index(drop=True))
-    # TE baseline sits below the WR baseline (FLEX-only position)
+    # TE replacement level remains below WR (value dries up fast after ~8)
     assert reps["TE"] < reps["WR"]
 
 

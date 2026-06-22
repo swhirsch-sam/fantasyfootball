@@ -1,20 +1,19 @@
 """Replacement-level / VORP math for the exact League #2 lineup.
 
 A flat per-position replacement rank (``RB17`` etc.) does not work here because
-the FLEX pool is shared across RB/WR/TE and there is **no dedicated TE slot at
-all**.  Instead we allocate starters iteratively:
+the FLEX pool is shared across RB/WR/TE.  Instead we allocate starters
+iteratively:
 
-1. Lock in every dedicated starter (QB/RB/WR/K/DEF) league-wide.
+1. Lock in every dedicated starter (QB/RB/WR/TE/K/DEF) league-wide.
 2. Fill the shared FLEX slots greedily from the best leftover RB/WR/TE.
 3. Replacement level per position = the best player *still* unrostered.
 
-That falls out naturally into the two effects this league is defined by,
-without hardcoding either:
+That falls out naturally into the key structural effects of this league:
 
 * **QB2s have real value** — 16 QB starters (2 × 8) push QB replacement far
   deeper than a 1-QB league.
-* **Only elite TEs matter** — TEs reach the lineup only by beating RB/WR for
-  FLEX, so TE replacement level is very low.
+* **TE drops off fast** — 8 TEs fill the dedicated slot; the rest compete for
+  FLEX against RB/WR, so TE replacement level is low after the top ~8.
 """
 
 from __future__ import annotations
@@ -42,11 +41,11 @@ def replacement_levels(
     roster = league_config["roster"]
     flex_positions = league_config["flex_eligible"]
 
-    # Dedicated starters first (no TE entry -> TEs only reach the lineup via FLEX).
     dedicated_starters = {
         "QB": roster["QB"] * teams,
         "RB": roster["RB"] * teams,
         "WR": roster["WR"] * teams,
+        "TE": roster.get("TE", 0) * teams,
         "K": roster["K"] * teams,
         "DEF": roster["DEF"] * teams,
     }
