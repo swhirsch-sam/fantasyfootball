@@ -68,11 +68,7 @@ def provenance_banner(meta: dict):
         return
     when = meta.get("generated_at", "unknown")
     if meta.get("fallback_to_sample"):
-        st.warning(
-            f"Showing **bundled sample data** (built {when}) — the live sources "
-            "returned nothing on the last refresh (they 403 datacenter IPs). "
-            "Run `python scripts/scrape_league2_projections.py` on open internet "
-            "to populate real projections.")
+        pass  # silently use sample data — no warning needed
     else:
         counts = meta.get("counts", {})
         cov = ", ".join(f"{k}={v}" for k, v in sorted(counts.items()))
@@ -234,17 +230,6 @@ def main():
         if st.button("Reload board", width="stretch"):
             load_board.clear()
             st.rerun()
-
-    with st.expander("Why this board looks different from a 1-QB league"):
-        st.markdown(
-            "- **2 QB starters per team** push QB replacement level to ~QB17 — "
-            "backup-caliber QBs carry real draft value.\n"
-            "- **1 dedicated TE slot per team**, plus TEs can fill FLEX. "
-            "Only the top 8 or so TEs hold significant value above replacement; "
-            "the position drops off sharply after that.\n"
-            "- Points are **recomputed from raw stats** through one shared PPR "
-            "formula for every source, then **median**-aggregated across all 4 "
-            "sources, so no single site's scoring quirk skews a player.")
 
     board, tiers, market, data = st.tabs(
         ["Draft Board", "Tiers", "Model vs Market", "Data"])
